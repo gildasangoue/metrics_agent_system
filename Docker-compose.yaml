@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME:-j0rdy06}/metrics-agent-api:latest
+    container_name: system-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    networks:
+      - system-network
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "app.agent"]
+    image: ${DOCKERHUB_USERNAME:-j0rdy06}/metrics-agent-collector:latest
+    container_name: system-agent
+    env_file:
+      - .env
+    networks:
+      - system-network
+    depends_on:
+      api:
+        condition: service_healthy
+networks:
+  system-network:
+    driver: bridge
